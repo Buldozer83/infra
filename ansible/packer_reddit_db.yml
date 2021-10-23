@@ -1,0 +1,21 @@
+- name: "Reddit App: Configure app environment"
+  hosts: all 
+  gather_facts: true
+  become: yes
+
+  tasks:
+  - name: Install mongodb
+    apt:
+      name: mongodb
+      state: present
+
+  - name: Start mongodb
+    service:
+      name: mongodb
+      state: started
+
+  - name : Enabled mongodb
+    service:
+      name: mongodb
+      state: started
+      enabled: yes   

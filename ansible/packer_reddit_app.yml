@@ -1,0 +1,72 @@
+# Setup and configure ruby things for reddit app
+- name: "Reddit App: Configure app environment"
+  hosts: all 
+  gather_facts: true
+  become: yes
+
+  tasks:
+  - name: "Install ruby and rubygems and required packages"
+    apt: "name={{ item }} state=present"
+    with_items:
+      - ruby-full
+      - ruby-dev
+      - build-essential
+
+  - name: Install Ruby bundler
+    gem:
+      name: bundler
+      state: present
+      user_install: no
+  - name: Install mongodb
+    apt:
+      name: mongodb
+      state: present
+
+  - name: Start mongodb
+    service:
+      name: mongodb
+      state: started
+
+  - name : Enabled mongodb
+    service:
+      name: mongodb
+      state: started
+      enabled: yes    
+
+# Deploy reddit app
+  - name: "clone repo"
+    git:
+            repo: 'https://github.com/Artemmkin/reddit'
+            dest: /home/appuser/reddit
+
+ # - name: "Bundle install"
+ #   bundler:
+ #       state: present
+ #       chdir: /home/appuser/reddit
+ #       user_install: yes
+  - name: Run command bundle install
+    shell: bundle install
+    args:
+        chdir: /home/appuser/reddit
+
+  - name: download sources
+    get_url: url=https://raw.githubusercontent.com/Buldozer83/infra/master/packer/files/puma.service dest=/tmp/puma.service
+  - name: Add unit puma
+    copy:
+      src:  /tmp/puma.service
+      dest: /etc/systemd/system/puma.service
+    notify: restart puma
+
+  - name: reload systemd
+    become: true
+    service: name=puma state=reloaded
+  - name: "Puma start"
+    service:
+      name: puma
+      state: started  
+ 
+  handlers:
+    - name: enable puma
+      service:
+        name: puma
+        enabled: yes  
